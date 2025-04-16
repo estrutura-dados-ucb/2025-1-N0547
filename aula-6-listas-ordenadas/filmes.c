@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h> // floor()
 #include "filmes.h"
 #define MAX 50
 
@@ -10,7 +12,8 @@ typedef struct Filme {
 } Filme;
 
 typedef struct ListaFilmes {
-    Filme filmes[MAX];
+    // Filme filmes[MAX]; -> Alocação estática
+    Filme *filmes;
     int numFilmes;
 } ListaFilmes;
 
@@ -18,6 +21,8 @@ typedef struct ListaFilmes {
 
 void criaLista(ListaFilmes *lista){
     lista->numFilmes = 0;
+    // Criando lista de filmes com alocação dinâmica
+    lista->filmes = (Filme*) malloc(MAX*sizeof(Filme));
 }
 
 void listarFilmes(ListaFilmes *lista){
@@ -46,6 +51,49 @@ int buscarFilme(ListaFilmes *lista, char* nome){
         }
     }
     return -1;
+}
+
+
+int buscaBinariaFilme(ListaFilmes *lista, char* nomeBusca){
+    int esq = 0;
+    int dir = lista->numFilmes - 1;
+    int m = floor((esq + dir)/2);
+
+    while(esq <= dir){
+        if(strcmp(lista->filmes[m].nome, nomeBusca) == 0){
+            return m;
+        }
+        // Se nomeBusca a esquerda de filme na pos. m
+        else if(strcmp(lista->filmes[m].nome, nomeBusca) > 0){
+            dir = m - 1;
+            m = floor((esq + dir)/2);
+            
+        } 
+        // Se nomeBusca a direita de filme na pos. m
+        else if(strcmp(lista->filmes[m].nome, nomeBusca) < 0){
+            esq = m + 1;
+            m = floor((esq + dir)/2);
+        }
+    }
+    return -1;
+}
+
+
+void ordernarFilmes(ListaFilmes *lista){
+    int numFilmesOrdenados = 0;
+    for(int i = 0;i < lista->numFilmes;i++){
+        for(int j = 0;j < lista->numFilmes - numFilmesOrdenados - 1;j++){
+            if(strcmp(lista->filmes[j].nome,
+                    lista->filmes[j+1].nome) > 0){
+                Filme aux;
+                // Inverter filme da posição j com pos. j + 1
+                aux = lista->filmes[j+1];
+                lista->filmes[j+1] = lista->filmes[j];
+                lista->filmes[j] = aux;
+            }
+        }
+        numFilmesOrdenados++;
+    }
 }
 
 
@@ -78,6 +126,7 @@ int main(){
 
     printf("\n\nLista desordenada:\n");
     listarFilmes(&lista);
+    printf("-----------------------------------------\n");
 
     int i = buscarFilme(&lista, "questao de tempo");
     if(i >= 0){
@@ -85,4 +134,14 @@ int main(){
 
     }
 
+    ordernarFilmes(&lista);
+
+    printf("\n\nLista ordenada:\n");
+    listarFilmes(&lista);
+
+    i = buscaBinariaFilme(&lista, "questao de tempo");
+    if(i >= 0){
+        printf("Filme encontrado: %s, %s, %d", lista.filmes[i].nome, lista.filmes[i].diretor, lista.filmes[i].anoLancamento);
+
+    }
 }
